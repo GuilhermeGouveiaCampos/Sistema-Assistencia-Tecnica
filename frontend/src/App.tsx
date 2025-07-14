@@ -1,9 +1,15 @@
-function App() {
+import React from "react";
+import { Routes, Route } from "react-router-dom";
+import Login from "./pages/Login";
+import RecuperarSenha from "./pages/RecuperarSenha";
+
+const App: React.FC = () => {
   return (
-    <div className="text-center mt-10">
-      <h1 className="text-4xl font-bold text-blue-600">Tailwind funcionando!</h1>
-    </div>
+    <Routes>
+      <Route path="/" element={<Login />} />
+      <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+    </Routes>
   );
-}
+};
 
 export default App;
