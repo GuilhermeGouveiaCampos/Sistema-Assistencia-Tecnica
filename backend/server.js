@@ -54,6 +54,9 @@ app.use('/api/locais', rfidRoutes);
 const rotaTecnicos = require('./routes/tecnicos');
 app.use('/api/tecnicos', rotaTecnicos);
 
+const ordensRouter = require('./routes/ordens');
+app.use('/api/ordens', ordensRouter);
+
 // 🔊 Inicializa servidor
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {

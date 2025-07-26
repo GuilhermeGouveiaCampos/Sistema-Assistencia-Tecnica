@@ -141,7 +141,7 @@ const CadastrarUsuario: React.FC = () => {
             <img src="/icon-equipamentos.png" alt="" />
             <span>EQUIPAMENTOS</span>
           </button>
-          <button className="menu-btn" onClick={() => navigate("/ordens")}>
+          <button className="menu-btn" onClick={() => navigate("/ordemservico")}>
             <img src="/icon-os.png" alt="" />
             <span>ORDEM DE SERVIÇO</span>
           </button>

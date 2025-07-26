@@ -31,6 +31,8 @@ import UsuariosInativos from "./pages/usuarios/UsuariosInativos";
 
 import OrdensServico from './pages/ordem/OrdensServico';
 import CadastrarOrdem from './pages/ordem/CadastrarOrdem';
+import AlterarOrdem from './pages/ordem/AlterarOrdem';
+import OrdensInativas from './pages/ordem/OrdensInativas';
 
 
 
@@ -70,6 +72,8 @@ const App: React.FC = () => {
 
       <Route path="/ordemservico" element={<OrdensServico />} />
       <Route path="/ordemservico/cadastrar" element={<CadastrarOrdem />} />
+      <Route path="/ordemservico/Alterar" element={<AlterarOrdem />} />
+      <Route path="/ordemservico/inativos" element={<OrdensInativas />} />
 
 
 

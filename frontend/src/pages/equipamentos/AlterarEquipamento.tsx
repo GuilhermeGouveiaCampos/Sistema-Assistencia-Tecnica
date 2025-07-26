@@ -54,10 +54,9 @@ const AlterarEquipamento: React.FC = () => {
   formData.append("modelo", modelo);
   formData.append("numero_serie", numeroSerie);
 
-  // 👉 Envia as imagens que foram mantidas (após remoção no botão 'Remover')
-  formData.append("imagem", imagem); // já está em formato "img1.jpg,img2.jpg,..."
+  formData.append("imagem", imagem); 
 
-  // 👉 Envia novas imagens selecionadas
+  
   novasImagens.forEach((file) => {
     formData.append("imagens", file);
   });
@@ -92,7 +91,7 @@ const AlterarEquipamento: React.FC = () => {
           <button className="menu-btn" onClick={() => navigate("/equipamentos")}>
             <img src="/icon-equipamentos.png" alt="Ícone Equipamentos" /> <span>EQUIPAMENTOS</span>
           </button>
-          <button className="menu-btn" onClick={() => navigate("/ordens")}>
+          <button className="menu-btn" onClick={() => navigate("/ordemservico")}>
             <img src="/icon-os.png" alt="Ícone OS" /> <span>ORDENS DE SERVIÇO</span>
           </button>
           {idUsuario === "1" && (

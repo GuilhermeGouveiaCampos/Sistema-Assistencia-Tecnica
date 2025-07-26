@@ -84,7 +84,7 @@ const OrdensServico: React.FC = () => {
             <img src="/icon-equipamentos.png" alt="Ícone Equipamentos" /> <span>EQUIPAMENTOS</span>
           </button>
           <button className="menu-btn" onClick={() => navigate("/ordemservico")}>
-            <img src="/icon-os.png" alt="Ícone OS" /> <span>ORDENS DE SERVIÇO</span>
+            <img src="/icon-os.png" alt="Ícone OS" /> <span>ORDEM DE SERVIÇO</span>
           </button>
           {idUsuario === "1" && (
             <>
@@ -111,6 +111,7 @@ const OrdensServico: React.FC = () => {
         </header>
 
         <h1 className="titulo-clientes">ORDENS DE SERVIÇO</h1>
+
         <section className="clientes-section">
           <div className="container-central">
             <div className="filtros-clientes">
@@ -149,7 +150,7 @@ const OrdensServico: React.FC = () => {
                           className="btn detalhes"
                           onClick={(ev) => {
                             ev.stopPropagation();
-                            navigate(`/ordens/detalhes/${o.id_ordem}`);
+                            navigate(`/ordemservico/detalhes/${o.id_ordem}`);
                           }}
                         >
                           DETALHES
@@ -162,7 +163,8 @@ const OrdensServico: React.FC = () => {
             </div>
 
             <div className="acoes-clientes">
-              <button className="btn azul" onClick={() => navigate('/ordens/cadastrar')}>NOVA OS</button>
+              <button className="btn azul" onClick={() => navigate('/ordemservico/cadastrar')}>NOVA ORDEM DE SERVIÇO</button>
+
               <button
                 className="btn preto"
                 disabled={ordemSelecionada === null}
@@ -170,23 +172,27 @@ const OrdensServico: React.FC = () => {
                   const ordem = ordens.find(o => o.id_ordem === ordemSelecionada);
                   if (ordem) {
                     localStorage.setItem("ordemSelecionada", JSON.stringify(ordem));
-                    navigate('/ordens/editar');
+                    navigate('/ordemservico/editar');
                   }
                 }}
               >
                 ALTERAR
               </button>
+
               <button className="btn vermelho" disabled={ordemSelecionada === null} onClick={() => setMostrarModal(true)}>
                 EXCLUIR
               </button>
-              <button className="btn vermelho-claro" onClick={() => navigate('/ordens/inativas')}>INATIVAS</button>
-            </div>
 
-            <div className="voltar-container">
-              <button className="btn roxo" onClick={() => navigate('/')}>VOLTAR</button>
+              <button className="btn vermelho-claro" onClick={() => navigate('/ordemservico/inativas')}>
+                INATIVAS
+              </button>
             </div>
           </div>
         </section>
+
+        <div className="voltar-container">
+          <button className="btn roxo" onClick={() => navigate('/')}>VOLTAR</button>
+        </div>
 
         {mostrarModal && ordemAtual && (
           <ConfirmarExclusao

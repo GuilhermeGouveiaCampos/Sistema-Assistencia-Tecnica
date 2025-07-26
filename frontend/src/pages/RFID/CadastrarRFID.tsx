@@ -62,7 +62,7 @@ const CadastrarLocalRFID: React.FC = () => {
         <nav className="sidebar-menu">
           <button className="menu-btn" onClick={() => navigate("/clientes")}><img src="/icon-clientes.png" alt="" /><span>CLIENTES</span></button>
           <button className="menu-btn" onClick={() => navigate("/equipamentos")}><img src="/icon-equipamentos.png" alt="" /><span>EQUIPAMENTOS</span></button>
-          <button className="menu-btn" onClick={() => navigate("/ordens")}><img src="/icon-os.png" alt="" /><span>ORDEM DE SERVIÇO</span></button>
+          <button className="menu-btn" onClick={() => navigate("/ordemservico")}><img src="/icon-os.png" alt="" /><span>ORDEM DE SERVIÇO</span></button>
           {idUsuario === "1" && (
             <>
               <button className="menu-btn" onClick={() => navigate("/tecnicos")}><img src="/icon-tecnicos.png" alt="" /><span>TÉCNICOS</span></button>

@@ -112,7 +112,7 @@ const excluirEquipamento = async () => {
           <button className="menu-btn" onClick={() => navigate("/equipamentos")}>
             <img src="/icon-equipamentos.png" alt="Ícone Equipamentos" /> <span>EQUIPAMENTOS</span>
           </button>
-          <button className="menu-btn" onClick={() => navigate("/ordens")}>
+          <button className="menu-btn" onClick={() => navigate("/ordemservico")}>
             <img src="/icon-os.png" alt="Ícone OS" /> <span>ORDEM DE SERVIÇO</span>
           </button>
           {idUsuario === "1" && (

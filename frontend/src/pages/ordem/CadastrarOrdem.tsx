@@ -1,4 +1,3 @@
-// pages/ordens/CadastrarOrdem.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -11,23 +10,64 @@ interface Cliente {
   cpf: string;
 }
 
+interface Tecnico {
+  id_tecnico: number;
+  nome: string;
+  cpf: string; 
+  especializacao: string;
+}
+
+interface Local {
+  id_scanner: string;
+  local_instalado: string;
+}
+
+interface Status {
+  id_status: number;
+  descricao: string;
+}
+
 const CadastrarOrdem: React.FC = () => {
   const navigate = useNavigate();
   const nomeUsuario = localStorage.getItem("nome") || "Usuário";
   const idUsuario = localStorage.getItem("id") || "";
 
-const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [tecnicos, setTecnicos] = useState<Tecnico[]>([]);
+  const [locais, setLocais] = useState<Local[]>([]);
+  const [statusList, setStatusList] = useState<Status[]>([]);
+
   const [idCliente, setIdCliente] = useState('');
-  const [descricao, setDescricao] = useState('');
-  const [dataEntrada, setDataEntrada] = useState('');
-  const [estado, setEstado] = useState('Em análise');
+  const [idTecnico, setIdTecnico] = useState('');
+  const [idLocal, setIdLocal] = useState('');
+  const [idStatus, setIdStatus] = useState('');
+  const [descricaoProblema, setDescricaoProblema] = useState('');
+  const [dataCriacao, setDataCriacao] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedClienteId, setSelectedClienteId] = useState<number | null>(null);
+  const [showDropdownTecnico, setShowDropdownTecnico] = useState(false);
+  const [selectedTecnicoId, setSelectedTecnicoId] = useState<number | null>(null);
+
+
   useEffect(() => {
-    axios.get('http://localhost:3001/api/clientes/ativos')
-      .then(response => setClientes(response.data))
-      .catch(error => console.error('Erro ao buscar clientes:', error));
-  }, []);
+    axios.get('http://localhost:3001/api/ordens/clientes')
+      .then(res => setClientes(res.data))
+      .catch(err => console.error("Erro ao buscar clientes:", err));
+
+    axios.get('http://localhost:3001/api/tecnicos')
+      .then(res => setTecnicos(res.data))
+      .catch(err => console.error("Erro ao buscar técnicos:", err));
+
+    axios.get('http://localhost:3001/api/locais')
+      .then(res => setLocais(res.data))
+      .catch(err => console.error("Erro ao buscar locais:", err));
+
+    axios.get('http://localhost:3001/api/ordens/status-os')
+    .then(res => setStatusList(res.data))
+    .catch(err => console.error("Erro ao buscar status OS:", err));
+}, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,9 +75,11 @@ const [clientes, setClientes] = useState<Cliente[]>([]);
     try {
       await axios.post('http://localhost:3001/api/ordens', {
         id_cliente: idCliente,
-        descricao,
-        data_entrada: dataEntrada,
-        estado
+        id_tecnico: idTecnico,
+        id_local: idLocal,
+        id_status_os: idStatus,
+        descricao_problema: descricaoProblema,
+        data_criacao: dataCriacao
       });
 
       setShowSuccessModal(true);
@@ -46,6 +88,14 @@ const [clientes, setClientes] = useState<Cliente[]>([]);
       alert("Erro ao cadastrar ordem de serviço.");
     }
   };
+    function formatarCPF(cpf: string) {
+      return cpf
+        .replace(/\D/g, '') 
+        .replace(/(\d{3})(\d)/, '$1.$2')       
+        .replace(/(\d{3})(\d)/, '$1.$2')       
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2') 
+        .substring(0, 14);                    
+    }
 
   return (
     <div className="dashboard-container">
@@ -78,36 +128,116 @@ const [clientes, setClientes] = useState<Cliente[]>([]);
         <section className="clientes-section">
           <div className="container-central">
             <form className="form-cadastro-clientes" onSubmit={handleSubmit}>
+              
+             <label className="autocomplete-container">
+              <span>👤 CLIENTE</span>
+              <input
+                type="text"
+                className="input-pesquisavel"
+                placeholder="Busque por nome ou CPF"
+                value={idCliente}
+                onChange={(e) => {
+                  const input = e.target.value;
+                  const cpfFormatado = formatarCPF(input);
+                  setIdCliente(cpfFormatado);
+                  setShowDropdown(true);
+                }}
+                onFocus={() => setShowDropdown(true)}
+                onBlur={() => setTimeout(() => setShowDropdown(false), 200)}
+              />
+
+              {showDropdown && (
+                <ul className="autocomplete-dropdown">
+                  {clientes
+                    .filter(cli =>
+                      `${cli.nome} ${cli.cpf}`.replace(/\D/g, '').toLowerCase()
+                        .includes(idCliente.replace(/\D/g, '').toLowerCase())
+                    )
+                    .map(cli => (
+                      <li
+                        key={cli.id_cliente}
+                        onClick={() => {
+                          setIdCliente(`${cli.nome} - ${cli.cpf}`);
+                          setSelectedClienteId(cli.id_cliente);
+                          setShowDropdown(false);
+                        }}
+                      >
+                        {cli.nome} - {cli.cpf}
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </label>
+
+              <label className="autocomplete-container">
+                <span>👨‍🔧 TÉCNICO</span>
+                <input
+                  type="text"
+                  className="input-pesquisavel"
+                  placeholder="Busque por nome ou CPF"
+                  value={idTecnico}
+                  onChange={(e) => {
+                    const input = e.target.value;
+                    const cpfFormatado = formatarCPF(input);
+                    setIdTecnico(cpfFormatado);
+                    setShowDropdownTecnico(true);
+                  }}
+                  onFocus={() => setShowDropdownTecnico(true)}
+                  onBlur={() => setTimeout(() => setShowDropdownTecnico(false), 200)}
+                />
+
+                {showDropdownTecnico && (
+                  <ul className="autocomplete-dropdown">
+                    {tecnicos
+                      .filter(tec =>
+                        `${tec.nome} ${tec.cpf}`.replace(/\D/g, '').toLowerCase()
+                          .includes(idTecnico.replace(/\D/g, '').toLowerCase())
+                      )
+                      .map(tec => (
+                        <li
+                          key={tec.id_tecnico}
+                          onClick={() => {
+                            setIdTecnico(`${tec.nome} - ${tec.cpf}`);
+                            setSelectedTecnicoId(tec.id_tecnico);
+                            setShowDropdownTecnico(false);
+                          }}
+                        >
+                          {tec.nome} - {tec.cpf}
+                        </li>
+                      ))}
+                  </ul>
+                )}
+              </label>
+
+
               <label>
-                <span>👤 CLIENTE</span>
-                <select value={idCliente} onChange={(e) => setIdCliente(e.target.value)} required>
-                  <option value="">Selecione um cliente</option>
-                  {clientes.map((cli) => (
-                    <option key={cli.id_cliente} value={cli.id_cliente}>
-                      {cli.nome} - {cli.cpf}
-                    </option>
+                <span>🏢 LOCAL</span>
+                <select value={idLocal} onChange={(e) => setIdLocal(e.target.value)} required>
+                  <option value="">Selecione o local</option>
+                  {locais.map(loc => (
+                    <option key={loc.id_scanner} value={loc.id_scanner}>{loc.local_instalado}</option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span>📌 STATUS</span>
+                <select value={idStatus} onChange={(e) => setIdStatus(e.target.value)} required>
+                  <option value="">Selecione o status</option>
+                  {statusList.map(stat => (
+                    <option key={stat.id_status} value={stat.id_status}>{stat.descricao}</option>
                   ))}
                 </select>
               </label>
 
               <label>
                 <span>📝 DESCRIÇÃO DO PROBLEMA</span>
-                <textarea value={descricao} onChange={(e) => setDescricao(e.target.value)} required />
+                <textarea value={descricaoProblema} onChange={(e) => setDescricaoProblema(e.target.value)} required />
               </label>
 
               <label>
                 <span>📅 DATA DE ENTRADA</span>
-                <input type="date" value={dataEntrada} onChange={(e) => setDataEntrada(e.target.value)} required />
-              </label>
-
-              <label>
-                <span>📌 ESTADO</span>
-                <select value={estado} onChange={(e) => setEstado(e.target.value)}>
-                  <option value="Em análise">Em análise</option>
-                  <option value="Aprovado">Aprovado</option>
-                  <option value="Reprovado">Reprovado</option>
-                  <option value="Concluído">Concluído</option>
-                </select>
+                <input type="date" value={dataCriacao} onChange={(e) => setDataCriacao(e.target.value)} required />
               </label>
 
               <div className="acoes-clientes">

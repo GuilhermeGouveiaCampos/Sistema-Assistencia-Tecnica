@@ -28,7 +28,7 @@ const Dashboard = () => {
             <span>EQUIPAMENTOS</span>
           </button>
 
-          <button className="menu-btn" onClick={() => navigate("/ordens")}>
+          <button className="menu-btn" onClick={() => navigate("/ordemservico")}>
             <img src="/icon-os.png" alt="Ícone Ordem de Serviço" />
             <span>ORDEM DE SERVIÇO</span>
           </button>

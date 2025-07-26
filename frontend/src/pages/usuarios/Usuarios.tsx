@@ -88,7 +88,7 @@ const Usuarios: React.FC = () => {
         <nav className="sidebar-menu">
           <button className="menu-btn" onClick={() => navigate("/clientes")}> <img src="/icon-clientes.png" alt="Clientes" /> <span>CLIENTES</span> </button>
           <button className="menu-btn" onClick={() => navigate("/equipamentos")}> <img src="/icon-equipamentos.png" alt="Equipamentos" /> <span>EQUIPAMENTOS</span> </button>
-          <button className="menu-btn" onClick={() => navigate("/ordens")}> <img src="/icon-os.png" alt="OS" /> <span>ORDEM DE SERVIÇO</span> </button>
+          <button className="menu-btn" onClick={() => navigate("/ordemservico")}> <img src="/icon-os.png" alt="OS" /> <span>ORDEM DE SERVIÇO</span> </button>
           {idUsuario === "1" && (
             <>
               <button className="menu-btn" onClick={() => navigate("/tecnicos")}> <img src="/icon-tecnicos.png" alt="Técnicos" /> <span>TÉCNICOS</span> </button>

@@ -111,3 +111,19 @@
   object-fit: cover;   
   border-radius: 50%;  
 }
+/* Torna o conteúdo principal rolável */
+.main-content {
+  flex: 1;
+  background-color: white;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;       
+  overflow-y: auto;     
+}
+
+/* Se quiser que o menu role sozinho ao ficar alto */
+.sidebar {
+  height: 100vh;         
+  overflow-y: auto;      
+}
