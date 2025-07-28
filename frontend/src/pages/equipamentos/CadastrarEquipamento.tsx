@@ -11,6 +11,16 @@ interface Cliente {
   nome: string;
   cpf: string;
 }
+interface Equipamento {
+  id_equipamento: number;
+  id_cliente: number;
+  tipo: string;
+  marca: string;
+  modelo: string;
+  numero_serie: string;
+  status: string;
+}
+
 
 const CadastrarEquipamento: React.FC = () => {
   const nomeUsuario = localStorage.getItem("nome") || "Usuário";
@@ -28,28 +38,48 @@ const CadastrarEquipamento: React.FC = () => {
   const [cpfCliente, setCpfCliente] = useState<string>("");
   const [imagens, setImagens] = useState<File[]>([]);
   const [mostrarModalSucesso, setMostrarModalSucesso] = useState(false);
+  const [equipamentos, setEquipamentos] = useState<Equipamento[]>([]);
 
-  useEffect(() => {
-    const carregarClientes = async () => {
-      try {
-        const response = await axios.get("http://localhost:3001/api/clientes");
-        setClientes(response.data);
-      } catch (error) {
-        console.error("Erro ao carregar clientes:", error);
-      }
-    };
-    carregarClientes();
-  }, []);
 
-  // ✅ UseEffect que redireciona após exibir modal de sucesso
-  useEffect(() => {
-    if (mostrarModalSucesso) {
-      const timer = setTimeout(() => {
-        navigate("/equipamentos");
-      }, 1500);
-      return () => clearTimeout(timer);
+useEffect(() => {
+  const carregarClientes = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/api/clientes");
+      setClientes(response.data);
+    } catch (error) {
+      console.error("Erro ao carregar clientes:", error);
     }
-  }, [mostrarModalSucesso]);
+  };
+  carregarClientes();
+}, []);
+
+useEffect(() => {
+  const carregarEquipamentos = async () => {
+    try {
+      const response = await axios.get("http://localhost:3001/api/equipamentos");
+      setEquipamentos(response.data);
+    } catch (error) {
+      console.error("Erro ao carregar equipamentos:", error);
+    }
+  };
+  carregarEquipamentos();
+}, []);
+
+useEffect(() => {
+  const dadosSalvos = localStorage.getItem("novoEquipamento");
+  if (dadosSalvos && clientes.length > 0 && equipamentos.length > 0) {
+    const { id_cliente} = JSON.parse(dadosSalvos);
+
+    const cliente = clientes.find(c => c.id_cliente === Number(id_cliente));
+    if (cliente) {
+      setFormulario(prev => ({ ...prev, id_cliente: cliente.id_cliente.toString() }));
+    }
+
+    // Aqui não precisa fazer nada com equipamento se não for exibir
+    localStorage.removeItem("novoEquipamento");
+  }
+}, [clientes, equipamentos]);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -69,49 +99,56 @@ const CadastrarEquipamento: React.FC = () => {
   }
 };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+ const handleSubmit = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-   const dados = new FormData();
-    dados.append("id_cliente", formulario.id_cliente);
-    dados.append("tipo", formulario.tipo);
-    dados.append("marca", formulario.marca);
-    dados.append("modelo", formulario.modelo);
-    dados.append("numero_serie", formulario.numero_serie);
-    dados.append("status", "ativo");
+  const dados = new FormData();
+  dados.append("id_cliente", formulario.id_cliente);
+  dados.append("tipo", formulario.tipo);
+  dados.append("marca", formulario.marca);
+  dados.append("modelo", formulario.modelo);
+  dados.append("numero_serie", formulario.numero_serie);
+  dados.append("status", "ativo");
 
-    imagens.forEach((imagem) => {
-      dados.append("imagens", imagem); 
+  imagens.forEach((imagem) => {
+    dados.append("imagens", imagem);
+  });
+
+  console.log("📤 Enviando dados para o backend...");
+
+  try {
+    const response = await axios.post("http://localhost:3001/api/equipamentos", dados, {
+      headers: { "Content-Type": "multipart/form-data" },
     });
 
+    console.log("✅ Resposta do backend:", response);
+    console.log("🔁 Status da resposta:", response.status);
 
-    console.log("📤 Enviando dados para o backend...");
+    if (response.status === 201 || response.status === 200) {
+      console.log("🎉 Modal de sucesso ativado!");
+      setMostrarModalSucesso(true);
 
-    try {
-      const response = await axios.post("http://localhost:3001/api/equipamentos", dados, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      console.log("✅ Resposta do backend:", response);
-      console.log("🔁 Status da resposta:", response.status);
-
-      if (response.status === 201 || response.status === 200) {
-        setMostrarModalSucesso(true);
-        console.log("🎉 Modal de sucesso ativado!");
-      } else {
-        console.warn("⚠️ Resposta inesperada:", response.status);
-        alert("Algo deu errado. Verifique o console.");
+      // ✅ Armazena os dados no localStorage aqui dentro:
+        if (response.data.id_equipamento) {
+        localStorage.setItem("novoEquipamento", JSON.stringify({
+          id_cliente: formulario.id_cliente,
+          id_equipamento: response.data.id_equipamento
+        }));
       }
-
-    } catch (error: unknown) {
-      if (axios.isAxiosError(error)) {
-        console.error("❌ Erro de Axios:", error.response?.data || error.message);
-      } else {
-        console.error("❌ Erro desconhecido:", error);
-      }
-      alert("Erro ao cadastrar equipamento. Veja o console.");
+    } else {
+      console.warn("⚠️ Resposta inesperada:", response.status);
+      alert("Algo deu errado. Verifique o console.");
     }
-  };
+
+  } catch (error: unknown) {
+    if (axios.isAxiosError(error)) {
+      console.error("❌ Erro de Axios:", error.response?.data || error.message);
+    } else {
+      console.error("❌ Erro desconhecido:", error);
+    }
+    alert("Erro ao cadastrar equipamento. Veja o console.");
+  }
+};
 
   // ✅ Debug para garantir que o modal está sendo acionado
   console.log("mostrarModalSucesso:", mostrarModalSucesso);
@@ -129,23 +166,28 @@ const CadastrarEquipamento: React.FC = () => {
 
       {/* MODAL DE SUCESSO */}
       {mostrarModalSucesso && (
-        <div style={{
-          position: 'fixed',
-          top: '30%',
-          left: '50%',
-          transform: 'translate(-50%, -30%)',
-          backgroundColor: '#fff',
-          border: '2px solid #000',
-          padding: '20px',
-          zIndex: 9999,
-          boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.2)",
-          borderRadius: "8px"
-        }}>
-          <h2>✅ SUCESSO!</h2>
-          <p>Equipamento cadastrado com sucesso.</p>
-          <button onClick={() => setMostrarModalSucesso(false)}>Fechar</button>
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <h2>✅ Equipamento cadastrado com sucesso!</h2>
+            <p>Deseja criar uma nova Ordem de Serviço para este equipamento?</p>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '15px' }}>
+              <button className="btn azul" onClick={() => {
+                setMostrarModalSucesso(false);
+                navigate("/ordemservico/cadastrar");
+              }}>
+                SIM
+              </button>
+              <button className="btn preto" onClick={() => {
+                setMostrarModalSucesso(false);
+                navigate("/equipamentos");
+              }}>
+                NÃO
+              </button>
+            </div>
+          </div>
         </div>
       )}
+
 
       <aside className="sidebar">
         <div className="sidebar-logo">

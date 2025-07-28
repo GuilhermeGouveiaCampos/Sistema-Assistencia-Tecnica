@@ -3,6 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import '../dashboard/Dashboard.css';
 import '../Css/Cadastrar.css';
+import { buscarTecnicoMenosCarregado } from '../../services/tecnicosService';
+
 
 interface Cliente {
   id_cliente: number;
@@ -20,12 +22,9 @@ interface Tecnico {
 interface Local {
   id_scanner: string;
   local_instalado: string;
+  status_interno: string;
 }
 
-interface Status {
-  id_status: number;
-  descricao: string;
-}
 
 const CadastrarOrdem: React.FC = () => {
   const navigate = useNavigate();
@@ -35,21 +34,30 @@ const CadastrarOrdem: React.FC = () => {
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [tecnicos, setTecnicos] = useState<Tecnico[]>([]);
   const [locais, setLocais] = useState<Local[]>([]);
-  const [statusList, setStatusList] = useState<Status[]>([]);
+  const [statusInterno, setStatusInterno] = useState('');
 
   const [idCliente, setIdCliente] = useState('');
   const [idTecnico, setIdTecnico] = useState('');
   const [idLocal, setIdLocal] = useState('');
-  const [idStatus, setIdStatus] = useState('');
   const [descricaoProblema, setDescricaoProblema] = useState('');
-  const [dataCriacao, setDataCriacao] = useState('');
-  const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [dataCriacao, setDataCriacao] = useState(() => {
+  const hoje = new Date();
+  return hoje.toISOString().split('T')[0]; // ✅ formato yyyy-MM-dd
+});
 
+const [showDropdownEquip, setShowDropdownEquip] = useState(false);
+
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [selectedClienteId, setSelectedClienteId] = useState<number | null>(null);
   const [showDropdownTecnico, setShowDropdownTecnico] = useState(false);
   const [selectedTecnicoId, setSelectedTecnicoId] = useState<number | null>(null);
+ 
+  const [equipamentos, setEquipamentos] = useState<Equipamento[]>([]);
+  const [idEquipamento, setIdEquipamento] = useState('');
+  const [selectedEquipamentoId, ] = useState<number | null>(null);
 
+  
 
   useEffect(() => {
     axios.get('http://localhost:3001/api/ordens/clientes')
@@ -60,28 +68,66 @@ const CadastrarOrdem: React.FC = () => {
       .then(res => setTecnicos(res.data))
       .catch(err => console.error("Erro ao buscar técnicos:", err));
 
-    axios.get('http://localhost:3001/api/locais')
-      .then(res => setLocais(res.data))
-      .catch(err => console.error("Erro ao buscar locais:", err));
+       axios.get('http://localhost:3001/api/equipamentos')
+    .then(res => setEquipamentos(res.data))
+    .catch(err => console.error("Erro ao buscar equipamentos:", err));
 
-    axios.get('http://localhost:3001/api/ordens/status-os')
-    .then(res => setStatusList(res.data))
-    .catch(err => console.error("Erro ao buscar status OS:", err));
+    
+  buscarTecnicoMenosCarregado()
+    .then(tecnico => {
+      setIdTecnico(`${tecnico.nome} - AUTO`);
+      setSelectedTecnicoId(tecnico.id_tecnico);
+    })
+    .catch(err => console.error("Erro ao buscar técnico balanceado:", err));
+
+
+
+      axios.get('http://localhost:3001/api/locais')
+    .then(res => {
+      setLocais(res.data);
+      const recepcao = res.data.find((loc: Local) =>
+        loc.local_instalado.toLowerCase().includes("recepção")
+      );
+
+      if (recepcao) {
+        setIdLocal(recepcao.id_scanner);
+        setStatusInterno(recepcao.status_interno); // Aqui já preenche o campo STATUS
+      }
+    })
+    .catch(err => console.error("Erro ao buscar locais:", err));
 }, []);
+
+interface Equipamento {
+  id_equipamento: number;
+  tipo: string;
+  marca: string;
+  modelo: string;
+  numero_serie: string;
+}
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       await axios.post('http://localhost:3001/api/ordens', {
-        id_cliente: idCliente,
-        id_tecnico: idTecnico,
-        id_local: idLocal,
-        id_status_os: idStatus,
-        descricao_problema: descricaoProblema,
-        data_criacao: dataCriacao
-      });
+      id_cliente: selectedClienteId,
+      id_tecnico: selectedTecnicoId,
+      id_local: idLocal,
+      status: statusInterno,
+      descricao_problema: descricaoProblema,
+      data_criacao: dataCriacao
+    });
 
+      await axios.post('http://localhost:3001/api/ordens', {
+      id_cliente: selectedClienteId,
+      id_tecnico: selectedTecnicoId,
+      id_equipamento: selectedEquipamentoId, // 👈 incluído aqui
+      id_local: idLocal,
+      id_status_os: statusInterno,
+      descricao_problema: descricaoProblema,
+      data_criacao: dataCriacao
+    });
       setShowSuccessModal(true);
     } catch (error) {
       console.error("Erro ao cadastrar OS:", error);
@@ -167,7 +213,70 @@ const CadastrarOrdem: React.FC = () => {
                     ))}
                 </ul>
               )}
-            </label>
+          </label>
+
+            <label className="autocomplete-container">
+            <span>🔧 EQUIPAMENTO</span>
+            <input
+              type="text"
+              className="input-pesquisavel"
+              placeholder="Busque por tipo, marca ou número de série"
+              value={idEquipamento}
+              onChange={(e) => {
+                setIdEquipamento(e.target.value);
+                setShowDropdownEquip(true);
+              }}
+              onFocus={() => setShowDropdownEquip(true)}
+              onBlur={() => setTimeout(() => setShowDropdownEquip(false), 200)}
+            />
+            {showDropdownEquip && (
+              <ul className="autocomplete-dropdown">
+                {equipamentos
+                  .filter(e =>
+                    `${e.tipo} ${e.marca} ${e.numero_serie}`.toLowerCase().includes(idEquipamento.toLowerCase())
+                  )
+                  .map(e => (
+                    <li
+                      key={e.id_equipamento}
+                      onClick={() => {
+                        setIdEquipamento(`${e.tipo} - ${e.marca} - ${e.numero_serie}`);
+                        setShowDropdownEquip(false);
+
+                        // Aqui entra a chamada para técnico com menos ordens
+                        axios.get('http://localhost:3001/api/tecnicos/menos-carregados')
+                          .then(res => {
+                            setIdTecnico(`${res.data.nome} - SELECIONADO AUTOMATICAMENTE`);
+                            alert(`🔧 Técnico ${res.data.nome} foi selecionado automaticamente por ter menos ordens de serviço em aberto.`);
+
+                          })
+                          .catch(err => console.error("Erro ao buscar técnico balanceado:", err));
+                      }}
+                    >
+                      {e.tipo} - {e.marca} - {e.numero_serie}
+                    </li>
+                  ))}
+              </ul>
+            )}
+          </label>
+            <label>
+            <span>📝 DESCRIÇÃO DO PROBLEMA</span>
+            <textarea
+              value={descricaoProblema}
+              onChange={(e) => setDescricaoProblema(e.target.value)}
+              rows={4}
+              placeholder="Informe o que o cliente relatou sobre o problema"
+              style={{
+                backgroundColor: "#000",
+                color: "#fff",
+                width: "100%",
+                padding: "8px",
+                border: "1px solid #555",
+                borderRadius: "4px",
+                resize: "vertical"
+              }}
+              required
+            />
+          </label>
 
               <label className="autocomplete-container">
                 <span>👨‍🔧 TÉCNICO</span>
@@ -210,30 +319,43 @@ const CadastrarOrdem: React.FC = () => {
               </label>
 
 
-              <label>
-                <span>🏢 LOCAL</span>
-                <select value={idLocal} onChange={(e) => setIdLocal(e.target.value)} required>
-                  <option value="">Selecione o local</option>
-                  {locais.map(loc => (
-                    <option key={loc.id_scanner} value={loc.id_scanner}>{loc.local_instalado}</option>
-                  ))}
-                </select>
-              </label>
+                <label>
+                  <span>🏢 LOCAL</span>
+                  <select
+                    value={idLocal}
+                    disabled
+                    title="Este campo está travado para 'Recepção'"
+                    style={{
+                      backgroundColor: "#000",   // preto
+                      color: "#fff",             // texto branco
+                      cursor: "not-allowed",     // cursor travado
+                      border: "1px solid #555"   // borda discreta (opcional)
+                    }}
+                  >
+                    {locais.map(loc => (
+                      <option key={loc.id_scanner} value={loc.id_scanner}>
+                        {loc.local_instalado}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
 
               <label>
                 <span>📌 STATUS</span>
-                <select value={idStatus} onChange={(e) => setIdStatus(e.target.value)} required>
-                  <option value="">Selecione o status</option>
-                  {statusList.map(stat => (
-                    <option key={stat.id_status} value={stat.id_status}>{stat.descricao}</option>
-                  ))}
-                </select>
+                <input
+                  type="text"
+                  value={statusInterno}
+                  readOnly
+                  style={{
+                    backgroundColor: "#000",
+                    color: "#fff",
+                    cursor: "not-allowed",
+                    border: "1px solid #555"
+                  }}
+                />
               </label>
 
-              <label>
-                <span>📝 DESCRIÇÃO DO PROBLEMA</span>
-                <textarea value={descricaoProblema} onChange={(e) => setDescricaoProblema(e.target.value)} required />
-              </label>
 
               <label>
                 <span>📅 DATA DE ENTRADA</span>

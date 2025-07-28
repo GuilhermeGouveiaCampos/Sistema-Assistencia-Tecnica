@@ -1,7 +1,8 @@
 const express = require('express');
 const mysql = require('mysql2');
 const cors = require('cors');
-const path = require('path'); // ✅ ESSA LINHA ESTAVA FALTANDO
+const path = require('path');
+
 require('dotenv').config();
 
 const app = express();
@@ -56,6 +57,10 @@ app.use('/api/tecnicos', rotaTecnicos);
 
 const ordensRouter = require('./routes/ordens');
 app.use('/api/ordens', ordensRouter);
+
+const tecnicosBalanceadosRoutes = require('./routes/tecnicosBalanceados');
+app.use('/api/tecnicos', tecnicosBalanceadosRoutes);
+
 
 // 🔊 Inicializa servidor
 const PORT = process.env.PORT || 3001;

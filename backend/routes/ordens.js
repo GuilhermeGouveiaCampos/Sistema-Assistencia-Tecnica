@@ -85,4 +85,69 @@ router.get('/status-os', async (req, res) => {
   }
 });
 
+// backend/routes/local.js
+router.get('/', async (req, res) => {
+  try {
+    const [rows] = await db.query('SELECT id_scanner, local_instalado, status_interno FROM local');
+    res.json(rows);
+  } catch (err) {
+    console.error('Erro ao buscar locais:', err);
+    res.status(500).json({ erro: 'Erro ao buscar locais' });
+  }
+});
+
+
+
+// 🔍 Buscar ordens de serviço com JOIN em cliente e status_os
+router.get('/', async (req, res) => {
+  const { nome_cliente, status } = req.query;
+
+  let sql = `
+    SELECT 
+      o.*, 
+      c.nome AS nome_cliente,
+      s.descricao AS status_descricao
+    FROM ordenservico o
+    JOIN cliente c ON o.id_cliente = c.id_cliente
+    LEFT JOIN status_os s ON o.id_status = s.id_status
+    WHERE 1=1
+  `;
+  const params = [];
+
+  if (nome_cliente) {
+    sql += ' AND c.nome LIKE ?';
+    params.push(`%${nome_cliente}%`);
+  }
+
+  if (status) {
+    sql += ' AND o.id_status_os = ?';
+    params.push(status);
+  }
+
+  try {
+    const [rows] = await db.query(sql, params);
+    res.json(rows);
+  } catch (error) {
+    console.error('❌ Erro ao buscar ordens de serviço:', error);
+    res.status(500).json({ erro: 'Erro ao buscar ordens de serviço' });
+  }
+});
+router.get('/menos-carregados', async (req, res) => {
+  try {
+    const [rows] = await db.query(`
+      SELECT t.id_tecnico, t.nome, COUNT(o.id_tecnico) AS total_os
+      FROM tecnico t
+      LEFT JOIN ordenservico o ON t.id_tecnico = o.id_tecnico
+      GROUP BY t.id_tecnico
+      ORDER BY total_os ASC
+      LIMIT 1
+    `);
+    res.json(rows[0]);
+  } catch (err) {
+    console.error("Erro ao buscar técnico menos carregado:", err);
+    res.status(500).json({ erro: "Erro interno ao buscar técnico balanceado" });
+  }
+});
+
+
 module.exports = router;
